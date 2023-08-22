@@ -25,13 +25,16 @@ app.register(fastifySqsSnsPublisher, {
 app.messageToSQS({message:"test-sqs"}, "test-queue");
 
 // publish batch message to SQS
-app.messageToSQS([{message:"test-sqs-1"}, {message:"test-sqs-2"}], "test-queue");
+app.messagesBatchToSQS([{message:"test-sqs-1"}, {message:"test-sqs-2"}], "test-queue");
+
+// publish delayed message to SQS (delay in seconds)
+app.messagesBatchToSQS({message:"test-sqs"}, "test-queue", 10);
 
 // publish simple message to SNS
 app.messageToSNS({message:"test-sns"}, "arn:aws:sns:eu-central-1:000000000000:test-topic");
 
 // publish batch message to SNS
-app.messageToSNS([{message:"test-sns-1"}, {message:"test-sns-2"}], "arn:aws:sns:eu-central-1:000000000000:test-topic");
+app.messagesBatchToSNS([{message:"test-sns-1"}, {message:"test-sns-2"}], "arn:aws:sns:eu-central-1:000000000000:test-topic");
 
 ```
 
@@ -49,13 +52,16 @@ app.register(fastifySqsSnsPublisher, {
 app.messageToSQS(new PublisherMessage({message:"test-sqs", attributes: {attr1: "value1"}}), "test-queue");
 
 // publish batch message to SQS
-app.messageToSQS([new PublisherMessage({message:"test-sqs-1", attributes: {attr1: "value1"}}), new PublisherMessage({message:"test-sqs-2", attributes: {attr1: "value1"}})], "test-queue");
+app.messagesBatchToSQS([new PublisherMessage({message:"test-sqs-1", attributes: {attr1: "value1"}}), new PublisherMessage({message:"test-sqs-2", attributes: {attr1: "value1"}})], "test-queue");
+
+// publish delayed message to SQS (delay in seconds)
+app.messagesBatchToSQS(new PublisherMessage({message:"test-sqs", attributes: {attr1: "value1"}}), "test-queue", 10);
 
 // publish simple message to SNS
 app.messageToSNS(new PublisherMessage({message:"test-sns", attributes: {attr1: "value1"}}), "arn:aws:sns:eu-central-1:000000000000:test-topic");
 
 // publish batch message to SNS
-app.messageToSNS([new PublisherMessage({message:"test-sns-1", attributes: {attr1: "value1"}}), new PublisherMessage({message:"test-sns-2", attributes: {attr1: "value1"}})], "arn:aws:sns:eu-central-1:000000000000:test-topic");
+app.messagesBatchToSNS([new PublisherMessage({message:"test-sns-1", attributes: {attr1: "value1"}}), new PublisherMessage({message:"test-sns-2", attributes: {attr1: "value1"}})], "arn:aws:sns:eu-central-1:000000000000:test-topic");
 
 ```
 

@@ -1,4 +1,4 @@
-import fp from "fastify-plugin";
+	import fp from "fastify-plugin";
 import {SendMessageBatchCommand, SendMessageCommand, SendMessageRequest, SQSClient as SQS} from "@aws-sdk/client-sqs";
 import {SNSClient as SNS, PublishBatchCommand, PublishCommand, PublishInput} from "@aws-sdk/client-sns";
 import {FastifyInstance} from "fastify";
