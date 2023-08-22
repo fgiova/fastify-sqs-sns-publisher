@@ -1,7 +1,7 @@
 {
   "name": "@fgiova/fastify-sqs-sns-publisher",
   "description": "A fastify plugin for publishing messages to SQS and SNS",
-  "version": "0.0.0",
+  "version": "1.0.0",
   "main": "dist/index.js",
   "files": [
     "dist"
