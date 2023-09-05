@@ -22,11 +22,11 @@ test("plugin definition", async t => {
 	await t.resolves(app.ready() as any);
 });
 
-test("sqs publisher", {only: true}, async t => {
+test("sqs publisher", async t => {
 	const sqs = new SQS({
 		endpoint: `${process.env.LOCALSTACK_ENDPOINT}`
 	});
-	await t.test("SQS publish message", {only: true}, async t => {
+	await t.test("SQS publish message", async t => {
 		const app = Fastify();
 		t.teardown(async () => {
 			await app.close();
@@ -298,6 +298,84 @@ test("sqs publisher", {only: true}, async t => {
 			"DataType": "String",
 			"StringValue": "test"
 		});
+	});
+	await t.test("SQS publish messages delayed", async t => {
+		const app = Fastify();
+		t.teardown(async () => {
+			await app.close();
+			await sqsPurge(`${process.env.LOCALSTACK_ENDPOINT}/000000000000/test-queue`);
+		});
+		app.register(publisherPlugin, {
+			sqsEndpoint: `${process.env.LOCALSTACK_ENDPOINT}/000000000000/`,
+			awsApiEndpoint: `${process.env.LOCALSTACK_ENDPOINT}`
+		});
+		await app.ready();
+		const messages: any[] = [];
+		for(let i = 0 ; i < 11; i++) {
+			messages.push(JSON.stringify({message:"test-sqs-batch", date: Date.now()}));
+		}
+		await app.delayedBatchToSQS(messages, "test-queue", 1);
+		const queueAttributes = await sqs.getQueueAttributes({
+			QueueUrl: `${process.env.LOCALSTACK_ENDPOINT}/000000000000/test-queue`,
+			AttributeNames: [
+				"All"
+			]
+		});
+		t.equal(queueAttributes.Attributes.ApproximateNumberOfMessagesDelayed, "11");
+		const messagesFromQueue = await sqs.receiveMessage({
+			QueueUrl: `${process.env.LOCALSTACK_ENDPOINT}/000000000000/test-queue`,
+			WaitTimeSeconds: 10
+		});
+		const message = messagesFromQueue.Messages[0];
+		const body = JSON.parse(message.Body);
+		t.equal(body.message, "test-sqs-batch");
+		t.ok(Date.now()-body.date >= 1000);
+	});
+
+	await t.test("SQS publish delayed messages w attributes", async t => {
+		const app = Fastify();
+		t.teardown(async () => {
+			await app.close();
+			await sqsPurge(`${process.env.LOCALSTACK_ENDPOINT}/000000000000/test-queue`);
+		});
+		app.register(publisherPlugin, {
+			sqsEndpoint: `${process.env.LOCALSTACK_ENDPOINT}/000000000000/`,
+			awsApiEndpoint: `${process.env.LOCALSTACK_ENDPOINT}`
+		});
+		await app.ready();
+		const messages: any[] = [];
+		for(let i = 0 ; i < 11; i++) {
+			const publisherMessage = new PublisherMessage({message:"test-sqs-batch", date: Date.now()}, {
+				"test-attribute-number": 1,
+				"test-attribute-string": "test",
+			});
+			messages.push(publisherMessage);
+		}
+		await app.delayedBatchToSQS(messages, "test-queue", 1);
+		const queueAttributes = await sqs.getQueueAttributes({
+			QueueUrl: `${process.env.LOCALSTACK_ENDPOINT}/000000000000/test-queue`,
+			AttributeNames: [
+				"All"
+			],
+		});
+		t.equal(queueAttributes.Attributes.ApproximateNumberOfMessagesDelayed, "11");
+		const messagesRead = await sqs.receiveMessage({
+			MessageAttributeNames: ["All"],
+			QueueUrl: `${process.env.LOCALSTACK_ENDPOINT}/000000000000/test-queue`,
+			WaitTimeSeconds: 10
+		});
+		const message = messagesRead.Messages[0];
+		const body = JSON.parse(message.Body);
+		t.equal(body.message, "test-sqs-batch");
+		t.has(message.MessageAttributes["test-attribute-number"], {
+			"DataType": "Number",
+			"StringValue": "1"
+		});
+		t.has(message.MessageAttributes["test-attribute-string"], {
+			"DataType": "String",
+			"StringValue": "test"
+		});
+		t.ok(Date.now()-body.date >= 1000);
 	});
 });
 

@@ -1,5 +1,8 @@
 # fastify SQS/SNS publisher plugin
-By: Francesco Giovannini <fgiova@fgiova.com>
+
+[![NPM version](https://img.shields.io/npm/v/@fgiova/fastify-sqs-sns-publisher.svg?style=flat)](https://www.npmjs.com/package/@fgiova/fastify-sqs-sns-publisher)
+![CI workflow](https://github.com/fgiova/fastify-sqs-sns-publisher/actions/workflows/node.js.yml/badge.svg)
+[![TypeScript](https://img.shields.io/badge/%3C%2F%3E-TypeScript-%230074c1.svg)](http://www.typescriptlang.org/)
 
 
 ## Description
@@ -28,7 +31,10 @@ app.messageToSQS({message:"test-sqs"}, "test-queue");
 app.messagesBatchToSQS([{message:"test-sqs-1"}, {message:"test-sqs-2"}], "test-queue");
 
 // publish delayed message to SQS (delay in seconds)
-app.messagesBatchToSQS({message:"test-sqs"}, "test-queue", 10);
+app.delayedMessageToSQS({message:"test-sqs"}, "test-queue", 10);
+
+// publish batch delayed message to SQS (delay in seconds)
+app.delayedBatchToSQS([{message:"test-sqs-1"}, {message:"test-sqs-2"}], "test-queue", 10);
 
 // publish simple message to SNS
 app.messageToSNS({message:"test-sns"}, "arn:aws:sns:eu-central-1:000000000000:test-topic");
@@ -49,19 +55,22 @@ app.register(fastifySqsSnsPublisher, {
 });
 
 // publish simple message to SQS
-app.messageToSQS(new PublisherMessage({message:"test-sqs", attributes: {attr1: "value1"}}), "test-queue");
+app.messageToSQS(new PublisherMessage({message:"test-sqs"}, {attr1: "value1"}), "test-queue");
 
 // publish batch message to SQS
-app.messagesBatchToSQS([new PublisherMessage({message:"test-sqs-1", attributes: {attr1: "value1"}}), new PublisherMessage({message:"test-sqs-2", attributes: {attr1: "value1"}})], "test-queue");
+app.messagesBatchToSQS([new PublisherMessage({message:"test-sqs-1"}, {attr1: "value1"}), new PublisherMessage({message:"test-sqs-2"}, {attr1: "value1"})], "test-queue");
 
 // publish delayed message to SQS (delay in seconds)
-app.messagesBatchToSQS(new PublisherMessage({message:"test-sqs", attributes: {attr1: "value1"}}), "test-queue", 10);
+app.messageToSQS(new PublisherMessage({message:"test-sqs"}, {attr1: "value1"}, 10), "test-queue");
+
+// publish batch delayed message to SQS (delay in seconds)
+app.messagesBatchToSQS([new PublisherMessage({message:"test-sqs-1"}, {attr1: "value1"}, 5), new PublisherMessage({message:"test-sqs-2"}, {attr1: "value1"}, 10)], "test-queue");
 
 // publish simple message to SNS
-app.messageToSNS(new PublisherMessage({message:"test-sns", attributes: {attr1: "value1"}}), "arn:aws:sns:eu-central-1:000000000000:test-topic");
+app.messageToSNS(new PublisherMessage({message:"test-sns"}, {attr1: "value1"}), "arn:aws:sns:eu-central-1:000000000000:test-topic");
 
 // publish batch message to SNS
-app.messagesBatchToSNS([new PublisherMessage({message:"test-sns-1", attributes: {attr1: "value1"}}), new PublisherMessage({message:"test-sns-2", attributes: {attr1: "value1"}})], "arn:aws:sns:eu-central-1:000000000000:test-topic");
+app.messagesBatchToSNS([new PublisherMessage({message:"test-sns-1"}, {attr1: "value1"}), new PublisherMessage({message:"test-sns-2"}, {attr1: "value1"})], "arn:aws:sns:eu-central-1:000000000000:test-topic");
 
 ```
 
