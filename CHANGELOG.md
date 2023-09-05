@@ -1,3 +1,10 @@
+# [1.1.0](https://github.com/fgiova/fastify-sqs-sns-publisher/compare/1.0.1...1.1.0) (2023-09-05)
+
+
+### Features
+
+* add batch of delayed sqs messages ([dbd435f](https://github.com/fgiova/fastify-sqs-sns-publisher/commit/dbd435fdc11c5baeba4dbf9a8becce00aec4ab2d))
+
 ## [1.0.1](https://github.com/fgiova/fastify-sqs-sns-publisher/compare/1.0.0...1.0.1) (2023-08-22)
 
 
