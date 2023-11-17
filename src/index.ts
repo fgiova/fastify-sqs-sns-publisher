@@ -1,6 +1,8 @@
-	import fp from "fastify-plugin";
-import {SendMessageBatchCommand, SendMessageCommand, SendMessageRequest, SQSClient as SQS} from "@aws-sdk/client-sqs";
-import {SNSClient as SNS, PublishBatchCommand, PublishCommand, PublishInput} from "@aws-sdk/client-sns";
+import fp from "fastify-plugin";
+import type {Pool} from "undici";
+import {Signer, SignerOptions} from "@fgiova/aws-signature";
+import {MiniSQSClient, SendMessage} from "@fgiova/mini-sqs-client";
+import {MiniSNSClient, PublishMessage} from "@fgiova/mini-sns-client";
 import {FastifyInstance} from "fastify";
 import {randomUUID} from "crypto";
 
@@ -41,7 +43,7 @@ export class PublisherMessage {
 		throw new Error("Invalid data type");
 	}
 
-	/* istanbul ignore next */
+	/* c8 ignore start */
 	private getSNSValue(value: unknown): string {
 		if (value.constructor === String) {
 			return value;
@@ -54,12 +56,12 @@ export class PublisherMessage {
 		}
 		throw new Error("Invalid data type");
 	}
+	/* c8 ignore stop */
 
-	public getAttributesSNS(): PublishInput["MessageAttributes"] | undefined {
-		const attributes: PublishInput["MessageAttributes"] = {};
+	public getAttributesSNS(): PublishMessage["MessageAttributes"] | undefined {
+		const attributes: PublishMessage["MessageAttributes"] = {};
 		if(!this.attributes) return undefined;
 		for (const property in this.attributes) {
-			/* istanbul ignore else */
 			if (this.attributes.hasOwnProperty(property)) {
 				const value = this.attributes[property];
 				attributes[property] = {
@@ -82,7 +84,7 @@ export class PublisherMessage {
 		throw new Error("Invalid data type");
 	}
 
-	/* istanbul ignore next */
+	/* c8 ignore start */
 	private getSQSValue(value: unknown): string {
 		if (value.constructor === String) {
 			return value;
@@ -90,19 +92,18 @@ export class PublisherMessage {
 		else if (!isNaN(Number(value))) {
 			return value.toString();
 		}
-		/* istanbul ignore next */
 		throw new Error("Invalid data type");
 	}
+	/* c8 ignore stop */
 
-	public getAttributesSQS(): SendMessageRequest["MessageAttributes"] | undefined {
-		const attributes: SendMessageRequest["MessageAttributes"] = {};
+	public getAttributesSQS(): SendMessage["MessageAttributes"] | undefined {
+		const attributes: SendMessage["MessageAttributes"] = {};
 		if(!this.attributes) return undefined;
 		for (const property in this.attributes) {
-			/* istanbul ignore else */
 			if (this.attributes.hasOwnProperty(property)) {
 				const value = this.attributes[property];
 				attributes[property] = {
-					DataType: this.getSQSDataType(value),
+					DataType: this.getSQSDataType(value) as any,
 					StringValue: this.getSQSValue(value)
 				};
 			}
@@ -113,14 +114,14 @@ export class PublisherMessage {
 
 declare module "fastify" {
 	export interface FastifyInstance {
-		sqs: SQS,
-		sns: SNS,
-		messageToSQS(message: string | Record<string, any>, queueName: string): sendMessageType;
-		delayedMessageToSQS(message: string | Record<string, any>, queueName: string, delaySeconds: number): sendMessageType;
-		messagesBatchToSQS(message: (string | Record<string, any>)[], queueName: string): sendMessagesType;
-		delayedBatchToSQS(message: (string | Record<string, any>)[], queueName: string, delaySeconds: number): sendMessagesType;
-		messageToSNS(message: string | Record<string, any>, topic: string): sendTopicMessageType;
-		messagesBatchToSNS(message: (string | Record<string, any>)[], topic: string): sendTopicMessagesType;
+		sqs: MiniSQSClient,
+		sns: MiniSNSClient
+		messageToSQS(message: string | Record<string, any>, queueArn: string): sendMessageType;
+		delayedMessageToSQS(message: string | Record<string, any>, queueArn: string, delaySeconds: number): sendMessageType;
+		messagesBatchToSQS(message: (string | Record<string, any>)[], queueArn: string): sendMessagesType;
+		delayedBatchToSQS(message: (string | Record<string, any>)[], queueArn: string, delaySeconds: number): sendMessagesType;
+		messageToSNS(message: string | Record<string, any>, topicArn: string): sendTopicMessageType;
+		messagesBatchToSNS(message: (string | Record<string, any>)[], topicArn: string): sendTopicMessagesType;
 	}
 }
 
@@ -130,21 +131,8 @@ type sendTopicMessageType = ReturnType<typeof publishSNSMessage>;
 type sendTopicMessagesType = ReturnType<typeof publishSNSBatch>;
 type PublisherMessageType = string | Record<string, any> | PublisherMessage;
 
-const SplitArray = (messages: any[], maxItems = 10 ) => {
-	return messages.reduce((resultArray, item, index) => {
-		const chunkIndex = Math.floor(index/maxItems);
 
-		if(!resultArray[chunkIndex]) {
-			resultArray[chunkIndex] = []; // start a new chunk
-		}
-
-		resultArray[chunkIndex].push(item);
-
-		return resultArray;
-	}, []);
-};
-
-const SQSMessageData = (message: PublisherMessage): Pick<SendMessageRequest,"MessageBody" | "MessageAttributes" | "DelaySeconds"> => {
+const SQSMessageData = (message: PublisherMessage): Pick<SendMessage,"MessageBody" | "MessageAttributes" | "DelaySeconds"> => {
 	const MessageBody = message.getMessage();
 	const DelaySeconds = message.getDelaySeconds();
 	const MessageAttributes = message.getAttributesSQS();
@@ -155,7 +143,7 @@ const SQSMessageData = (message: PublisherMessage): Pick<SendMessageRequest,"Mes
 	};
 };
 
-const SNSMessageData = (message: PublisherMessage): Pick<PublishInput,"Message" | "MessageAttributes"> => {
+const SNSMessageData = (message: PublisherMessage): Pick<PublishMessage,"Message" | "MessageAttributes"> => {
 	const Message = message.getMessage();
 	const MessageAttributes = message.getAttributesSNS();
 	return {
@@ -164,25 +152,20 @@ const SNSMessageData = (message: PublisherMessage): Pick<PublishInput,"Message" 
 	};
 };
 
-const publishSQSMessage = (message: PublisherMessage, queueName: string, sqs: SQS, endpoint: string) => {
+const publishSQSMessage = (message: PublisherMessage, queueArn: string, sqs: MiniSQSClient) => {
 	const MessageData = SQSMessageData(message);
-	const messageCommand = new SendMessageCommand({
-		...MessageData,
-		QueueUrl: `${endpoint}/${queueName}`,
-	});
-	return sqs.send(messageCommand);
+	return sqs.sendMessage(queueArn, MessageData);
 };
 
-const publishSNSMessage = (message: PublisherMessage, topic: string, sns: SNS) => {
+const publishSNSMessage = (message: PublisherMessage, topic: string, sns: MiniSNSClient) => {
 	const MessageData = SNSMessageData(message);
-	const publishCommand = new PublishCommand({
+	return sns.publishMessage({
 		...MessageData,
 		TopicArn: topic
 	});
-	return sns.send(publishCommand);
 };
 
-const publishSQSBatch = async (messages: PublisherMessage[], queueName: string, sqs: SQS, endpoint: string) => {
+const publishSQSBatch = async (messages: PublisherMessage[], queueArn: string, sqs: MiniSQSClient) => {
 	const entries = messages.map(message => {
 		const MessageData = SQSMessageData(message);
 		return {
@@ -191,21 +174,11 @@ const publishSQSBatch = async (messages: PublisherMessage[], queueName: string, 
 		};
 	});
 
-	const splittedArray = SplitArray(entries);
-	const sqsLoop = [];
-
-	for (const messagesSplitted of splittedArray) {
-		sqsLoop.push(sqs.send(new SendMessageBatchCommand({
-			Entries: messagesSplitted,
-			QueueUrl: `${endpoint}/${queueName}`,
-		})));
-	}
-
-	return Promise.all(sqsLoop);
+	return sqs.sendMessageBatch(queueArn, entries);
 };
 
-/* istanbul ignore next */
-const publishSNSBatch = async (messages: PublisherMessage[], topic: string, sns: SNS) => {
+/* c8 ignore start */
+const publishSNSBatch = async (messages: PublisherMessage[], topicArn: string, sns: MiniSNSClient) => {
 	const entries = messages.map(message => {
 		const MessageData = SNSMessageData(message);
 		return {
@@ -214,57 +187,77 @@ const publishSNSBatch = async (messages: PublisherMessage[], topic: string, sns:
 		};
 	});
 
-	const splittedArray = SplitArray(entries);
-	const snsLoop = [];
-
-	for (const messagesSplitted of splittedArray) {
-		snsLoop.push(sns.send(new PublishBatchCommand({
-			PublishBatchRequestEntries: messagesSplitted,
-			TopicArn: topic
-		})));
-	}
-
-	return Promise.all(snsLoop);
+	return sns.publishMessageBatch({
+		TopicArn: topicArn,
+		PublishBatchRequestEntries: entries
+	})
 };
+/* c8 ignore stop */
 
 const publisherSqsSns = (fastify: FastifyInstance, options: {
-	sqsEndpoint: string
-	awsApiEndpoint?: string
+	sns: {
+		region: string,
+		endpoint?: string
+	},
+	sqs: {
+		region: string,
+		endpoint?: string
+	},
+	undiciOptions?: Pool.Options,
+	signer?: Signer | SignerOptions,
+	destroySigner?: boolean
 }, done: any) => {
-	const sqs = new SQS({apiVersion: "2012-11-05", endpoint: options.awsApiEndpoint});
-	const sns = new SNS({apiVersion: "2010-03-31", endpoint: options.awsApiEndpoint});
-	const sqsEndpoint = sqs.config.endpoint?.toString() || "";
+	/* c8 ignore next */
+	const signer = options.signer instanceof Signer ? options.signer : new Signer({...options.signer || {}});
+	const sqs = new MiniSQSClient(options.sqs.region, options.sqs.endpoint, options.undiciOptions, signer);
+	const sns = new MiniSNSClient(options.sns.region, options.sns.endpoint, options.undiciOptions, signer);
 	fastify.decorate("sqs", sqs);
 	fastify.decorate("sns", sns);
-	fastify.decorate("messageToSQS", (message: PublisherMessageType, queueName: string) => {
+	fastify.decorate("messageToSQS", (message: PublisherMessageType, queueArn: string) => {
 		const publisherMessage = message instanceof PublisherMessage ? message : new PublisherMessage(message);
-		return publishSQSMessage(publisherMessage, queueName, sqs, sqsEndpoint);
+		return publishSQSMessage(publisherMessage, queueArn, sqs);
 	});
-	fastify.decorate("delayedMessageToSQS", (message: PublisherMessageType, queueName: string, delaySeconds: number) => {
+	fastify.decorate("delayedMessageToSQS", (message: PublisherMessageType, queueArn: string, delaySeconds: number) => {
 		const publisherMessage = message instanceof PublisherMessage ? message : new PublisherMessage(message);
 		publisherMessage.setDelaySeconds(delaySeconds);
-		return publishSQSMessage(publisherMessage, queueName, sqs, sqsEndpoint);
+		return publishSQSMessage(publisherMessage, queueArn, sqs);
 	});
-	fastify.decorate("messagesBatchToSQS", (messages: PublisherMessageType[], queueName: string) => {
+	fastify.decorate("messagesBatchToSQS", (messages: PublisherMessageType[], queueArn: string) => {
 		const publisherMessages = messages.map(message => message instanceof PublisherMessage ? message : new PublisherMessage(message));
-		return publishSQSBatch(publisherMessages, queueName, sqs, sqsEndpoint);
+		return publishSQSBatch(publisherMessages, queueArn, sqs);
 	});
-	fastify.decorate("delayedBatchToSQS", (messages: PublisherMessageType[], queueName: string, delaySeconds: number) => {
+	fastify.decorate("delayedBatchToSQS", (messages: PublisherMessageType[], queueArn: string, delaySeconds: number) => {
 		const publisherMessages = messages.map(message => {
 			const publisherMessage = message instanceof PublisherMessage ? message : new PublisherMessage(message);
 			publisherMessage.setDelaySeconds(delaySeconds);
 			return publisherMessage;
 		});
-		return publishSQSBatch(publisherMessages, queueName, sqs, sqsEndpoint);
+		return publishSQSBatch(publisherMessages, queueArn, sqs);
 	});
 	fastify.decorate("messageToSNS", (message: string | Record<string, any>, topic: string) => {
 		const publisherMessage = message instanceof PublisherMessage ? message : new PublisherMessage(message);
 		return publishSNSMessage(publisherMessage, topic, sns);
 	});
-	/* istanbul ignore next */
+	/* c8 ignore start */
 	fastify.decorate("messagesBatchToSNS", (messages: PublisherMessageType[], topic: string) => {
 		const publisherMessages = messages.map(message => message instanceof PublisherMessage ? message : new PublisherMessage(message));
 		return publishSNSBatch(publisherMessages, topic, sns);
+	});
+	/* c8 ignore stop */
+	fastify.addHook("onClose", async () => {
+		await Promise.all(
+			[
+				sqs.destroy(false),
+				sns.destroy(false)
+			]
+		);
+		/* c8 ignore next 6 */
+		try {
+			return options.destroySigner || options.destroySigner === undefined ? await signer.destroy() : null;
+		}
+		catch (error) {
+			return null;
+		}
 	});
 	done();
 };

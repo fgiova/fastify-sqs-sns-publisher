@@ -21,25 +21,30 @@ npm i @fgiova/fastify-sqs-sns-publisher
 const fastify = require("fastify")()
 const fastifySqsSnsPublisher = require("@fgiova/fastify-sqs-sns-publisher");
 app.register(fastifySqsSnsPublisher, {
-    sqsEndpoint: "https://sqs.eu-central-1.amazonaws.com",
+    sqs: {
+        region: "eu-central-1",
+    },
+    sns: {
+        region: "eu-central-1",
+    },
 });
 
 // publish simple message to SQS
-app.messageToSQS({message:"test-sqs"}, "test-queue");
+app.messageToSQS({message:"test-sqs"}, "arn:aws:sqs:eu-central-1:000000000000:test-queue");
 
-// publish batch message to SQS
-app.messagesBatchToSQS([{message:"test-sqs-1"}, {message:"test-sqs-2"}], "test-queue");
+// publish batch message to SQS (not limited to 10 messages)
+app.messagesBatchToSQS([{message:"test-sqs-1"}, {message:"test-sqs-2"}], "arn:aws:sqs:eu-central-1:000000000000:test-queue");
 
 // publish delayed message to SQS (delay in seconds)
 app.delayedMessageToSQS({message:"test-sqs"}, "test-queue", 10);
 
-// publish batch delayed message to SQS (delay in seconds)
-app.delayedBatchToSQS([{message:"test-sqs-1"}, {message:"test-sqs-2"}], "test-queue", 10);
+// publish batch delayed message to SQS (delay in seconds and not limited to 10 messages)
+app.delayedBatchToSQS([{message:"test-sqs-1"}, {message:"test-sqs-2"}], "arn:aws:sqs:eu-central-1:000000000000:test-queue", 10);
 
 // publish simple message to SNS
 app.messageToSNS({message:"test-sns"}, "arn:aws:sns:eu-central-1:000000000000:test-topic");
 
-// publish batch message to SNS
+// publish batch message to SNS (not limited to 10 messages)
 app.messagesBatchToSNS([{message:"test-sns-1"}, {message:"test-sns-2"}], "arn:aws:sns:eu-central-1:000000000000:test-topic");
 
 ```
@@ -51,25 +56,30 @@ const fastify = require("fastify")()
 const fastifySqsSnsPublisher = require("@fgiova/fastify-sqs-sns-publisher");
 const {PublisherMessage} = require("@fgiova/fastify-sqs-sns-publisher");
 app.register(fastifySqsSnsPublisher, {
-    sqsEndpoint: "https://sqs.eu-central-1.amazonaws.com",
+    sqs: {
+        region: "eu-central-1",
+    },
+    sns: {
+        region: "eu-central-1",
+    },
 });
 
 // publish simple message to SQS
-app.messageToSQS(new PublisherMessage({message:"test-sqs"}, {attr1: "value1"}), "test-queue");
+app.messageToSQS(new PublisherMessage({message:"test-sqs"}, {attr1: "value1"}), "arn:aws:sqs:eu-central-1:000000000000:test-queue");
 
-// publish batch message to SQS
-app.messagesBatchToSQS([new PublisherMessage({message:"test-sqs-1"}, {attr1: "value1"}), new PublisherMessage({message:"test-sqs-2"}, {attr1: "value1"})], "test-queue");
+// publish batch message to SQS (not limited to 10 messages)
+app.messagesBatchToSQS([new PublisherMessage({message:"test-sqs-1"}, {attr1: "value1"}), new PublisherMessage({message:"test-sqs-2"}, {attr1: "value1"})], "arn:aws:sqs:eu-central-1:000000000000:test-queue");
 
 // publish delayed message to SQS (delay in seconds)
-app.messageToSQS(new PublisherMessage({message:"test-sqs"}, {attr1: "value1"}, 10), "test-queue");
+app.messageToSQS(new PublisherMessage({message:"test-sqs"}, {attr1: "value1"}, 10),"arn:aws:sqs:eu-central-1:000000000000:test-queue");
 
-// publish batch delayed message to SQS (delay in seconds)
-app.messagesBatchToSQS([new PublisherMessage({message:"test-sqs-1"}, {attr1: "value1"}, 5), new PublisherMessage({message:"test-sqs-2"}, {attr1: "value1"}, 10)], "test-queue");
+// publish batch delayed message to SQS (delay in seconds and not limited to 10 messages)
+app.messagesBatchToSQS([new PublisherMessage({message:"test-sqs-1"}, {attr1: "value1"}, 5), new PublisherMessage({message:"test-sqs-2"}, {attr1: "value1"}, 10)], "arn:aws:sqs:eu-central-1:000000000000:test-queue");
 
 // publish simple message to SNS
 app.messageToSNS(new PublisherMessage({message:"test-sns"}, {attr1: "value1"}), "arn:aws:sns:eu-central-1:000000000000:test-topic");
 
-// publish batch message to SNS
+// publish batch message to SNS (not limited to 10 messages)
 app.messagesBatchToSNS([new PublisherMessage({message:"test-sns-1"}, {attr1: "value1"}), new PublisherMessage({message:"test-sns-2"}, {attr1: "value1"})], "arn:aws:sns:eu-central-1:000000000000:test-topic");
 
 ```
@@ -84,10 +94,16 @@ The PublisherMessage support the following attributes:
 
 ### Options
 
-| Option          | Type    | Description                                                |
-|-----------------|---------|------------------------------------------------------------|
-| sqsEndpoint     | string  | The SQS endpoint to use.  (mandatory)                      |
-| awsApiEndpoint  | string  | Default endpoint url for AWS API (useful in test sessions) |
+| Option        | Type   | Description                                                                                |
+|---------------|--------|--------------------------------------------------------------------------------------------|
+| sqs           | object | SQS configuration                                                                          |
+| sqs.region    | string | AWS Region (mandatory)                                                                     |
+| sqs.endpoint  | string | The SQS endpoint to use.                                                                   |
+| sns           | object | SNS configuration                                                                          |
+| sns.region    | string | AWS Region (mandatory)                                                                     |
+| sns.endpoint  | string | The SNS endpoint to use.                                                                   |
+| undiciOptions | object | Undici Pool configuration options                                                          |
+| signer        | object | [Signer](https://github.com/fgiova/aws-signature) instance configuration or Signer options |
 
 ## License
 Licensed under [MIT](./LICENSE).

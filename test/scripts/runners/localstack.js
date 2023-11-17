@@ -5,7 +5,7 @@ const { GenericContainer, Wait, Network }  = require("testcontainers");
 
 
 const startLocalStack = async () => {
-    const localStack = await new GenericContainer("localstack/localstack:1.0")
+    const localStack = await new GenericContainer("localstack/localstack:latest")
         .withExposedPorts(4566)
         .withEnvironment({
             SERVICES: "sqs,sns",
@@ -48,13 +48,16 @@ const bootstrap = async (host, port) => {
         QueueName: "test-queue"
     });
     await sqs.createQueue({
-        QueueName: "test-queue-filtered"
+        QueueName: "test-queue-topic"
+    });
+    await sqs.createQueue({
+        QueueName: "test-queue-topic-filtered"
     })
 
     await sns.subscribe({
         TopicArn :"arn:aws:sns:eu-central-1:000000000000:test-topic",
         Protocol: "sqs",
-        Endpoint: "arn:aws:sqs:eu-central-1:000000000000:test-queue",
+        Endpoint: "arn:aws:sqs:eu-central-1:000000000000:test-queue-topic",
         Attributes:{
             RawMessageDelivery: "true"
         }
@@ -62,12 +65,13 @@ const bootstrap = async (host, port) => {
     await sns.subscribe({
         TopicArn :"arn:aws:sns:eu-central-1:000000000000:test-topic",
         Protocol: "sqs",
-        Endpoint: `http://localhost:4566/000000000000/test-queue-filtered`,
+        Endpoint: "arn:aws:sqs:eu-central-1:000000000000:test-queue-topic-filtered",
         Attributes:{
             RawMessageDelivery: "true",
             FilterPolicy: JSON.stringify({
                 "test": ["test"]
-            })
+            }),
+            FilterPolicyScope: "MessageAttributes"
         },
     })
 };
