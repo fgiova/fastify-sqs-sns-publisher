@@ -42,7 +42,6 @@ jspm_packages/
 docs/
 coverage
 
-
 # Optional npm cache directory
 .npm
 
@@ -98,3 +97,4 @@ coverage
 dist/
 .nyc_output/
 !/.env.dev
+/.tap/

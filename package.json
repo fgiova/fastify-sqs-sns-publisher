@@ -10,10 +10,19 @@
     "lint": "eslint 'src/**/*.ts'",
     "clean": "rimraf dist",
     "build": "tsc",
-    "test": "tap --before=test/scripts/executors/before.js --after=test/scripts/executors/teardown.js --node-arg=--require=ts-node/register",
-    "test:debug": "tap -T -O --before=test/scripts/executors/before.js --after=test/scripts/executors/teardown.js --node-arg=--require=ts-node/register",
-    "test:local": "TEST_LOCAL=true tap --before=test/scripts/executors/before.js --after=test/scripts/executors/teardown.js --node-arg=--require=ts-node/register",
-    "test:local:debug": "TEST_LOCAL=true tap -T -O --before=test/scripts/executors/before.js --after=test/scripts/executors/teardown.js --node-arg=--require=ts-node/register"
+    "test": "tap --timeout=90",
+    "test:debug": "tap --timeout=0",
+    "test:local": "TEST_LOCAL=true tap",
+    "test:local:debug": "TEST_LOCAL=true tap --only --timeout=0"
+  },
+  "tap": {
+    "show-full-coverage": true,
+    "before": "./test/scripts/executors/before.js",
+    "after": "./test/scripts/executors/teardown.js",
+    "exclude": [
+      "test/helpers/**/*",
+      "test/scripts/**/*"
+    ]
   },
   "repository": {
     "type": "git",
@@ -34,14 +43,9 @@
   "engines": {
     "node": ">=18.0.0"
   },
-  "tap": {
-    "ts": true,
-    "lines": 100,
-    "branches": 100,
-    "statements": 100,
-    "functions": 90
-  },
   "devDependencies": {
+    "@aws-sdk/client-sns": "^3.451.0",
+    "@aws-sdk/client-sqs": "^3.451.0",
     "@semantic-release/changelog": "^6.0.3",
     "@semantic-release/git": "^10.0.1",
     "@types/node": "^18.15.0",
@@ -56,14 +60,17 @@
     "nodemon": "^2.0.22",
     "prettier": "^2.8.7",
     "semantic-release": "^21.0.9",
-    "tap": "^16.3.4",
+    "tap": "^18.6.1",
     "testcontainers": "^10.2.1",
     "ts-node": "^10.9.1",
-    "typescript": "^5.0.3"
+    "typescript": "^5.2.2"
+  },
+  "peerDependencies": {
+    "@fgiova/aws-signature": "^2.0.0"
   },
   "dependencies": {
-    "@aws-sdk/client-sns": "^3.395.0",
-    "@aws-sdk/client-sqs": "^3.395.0",
+    "@fgiova/mini-sns-client": "^1.2.0",
+    "@fgiova/mini-sqs-client": "^2.1.0",
     "fastify-plugin": "^4.5.1"
   }
 }
