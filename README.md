@@ -3,7 +3,8 @@
 [![NPM version](https://img.shields.io/npm/v/@fgiova/fastify-sqs-sns-publisher.svg?style=flat)](https://www.npmjs.com/package/@fgiova/fastify-sqs-sns-publisher)
 ![CI workflow](https://github.com/fgiova/fastify-sqs-sns-publisher/actions/workflows/node.js.yml/badge.svg)
 [![TypeScript](https://img.shields.io/badge/%3C%2F%3E-TypeScript-%230074c1.svg)](http://www.typescriptlang.org/)
-
+[![Maintainability](https://api.codeclimate.com/v1/badges/6e3c53029aa5595a2a5d/maintainability)](https://codeclimate.com/github/fgiova/fastify-sqs-sns-publisher/maintainability)
+[![Test Coverage](https://api.codeclimate.com/v1/badges/6e3c53029aa5595a2a5d/test_coverage)](https://codeclimate.com/github/fgiova/fastify-sqs-sns-publisher/test_coverage)
 
 ## Description
 This plugin for fastify 4.x allows you to publish messages to AWS SQS queues and SNS topics, using a simple interface.
