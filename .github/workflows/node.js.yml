@@ -33,8 +33,18 @@ jobs:
       - name: Install dependencies
         run: npm i --ignore-scripts
 
-      - name: Run tests
-        run: npm test
+      - name: Run tests w coverage report
+        run: npm test:coverage
+
+      - name: publish code coverage to code-climate (duh)
+        if: ${{ github.event_name == 'push' && matrix.node-version === 20 }} # Push coverage only once inside the matrix.
+        uses: paambaati/codeclimate-action@v5.0.0
+        env:
+          CC_TEST_REPORTER_ID: a8d1b2062dff16722be46ddd4a84e8339d8c64ac2038de4919e8e14aea96ddfa
+        with:
+          debug: true
+          coverageLocations: |
+            ${{github.workspace}}/.tap/report/lcov.info:lcov
 
   build:
 

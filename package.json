@@ -13,7 +13,8 @@
     "test": "tap --timeout=90",
     "test:debug": "tap --timeout=0",
     "test:local": "TEST_LOCAL=true tap",
-    "test:local:debug": "TEST_LOCAL=true tap --only --timeout=0"
+    "test:local:debug": "TEST_LOCAL=true tap --only --timeout=0",
+    "test:coverage": "tap --coverage-report=lcovonly --coverage-report=text"
   },
   "tap": {
     "show-full-coverage": true,
