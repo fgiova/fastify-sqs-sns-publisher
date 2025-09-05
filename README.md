@@ -3,14 +3,16 @@
 [![NPM version](https://img.shields.io/npm/v/@fgiova/fastify-sqs-sns-publisher.svg?style=flat)](https://www.npmjs.com/package/@fgiova/fastify-sqs-sns-publisher)
 ![CI workflow](https://github.com/fgiova/fastify-sqs-sns-publisher/actions/workflows/node.js.yml/badge.svg)
 [![TypeScript](https://img.shields.io/badge/%3C%2F%3E-TypeScript-%230074c1.svg)](http://www.typescriptlang.org/)
-[![Maintainability](https://api.codeclimate.com/v1/badges/6e3c53029aa5595a2a5d/maintainability)](https://codeclimate.com/github/fgiova/fastify-sqs-sns-publisher/maintainability)
-[![Test Coverage](https://api.codeclimate.com/v1/badges/6e3c53029aa5595a2a5d/test_coverage)](https://codeclimate.com/github/fgiova/fastify-sqs-sns-publisher/test_coverage)
+[![Linted with Biome](https://img.shields.io/badge/Linted_with-Biome-60a5fa?style=flat&logo=biome)](https://biomejs.dev)
+[![Maintainability](https://qlty.sh/gh/fgiova/projects/fastify-sqs-sns-publisher/maintainability.svg)](https://qlty.sh/gh/fgiova/projects/fastify-sqs-sns-publisher)
+[![Code Coverage](https://qlty.sh/gh/fgiova/projects/fastify-sqs-sns-publisher/coverage.svg)](https://qlty.sh/gh/fgiova/projects/fastify-sqs-sns-publisher)
 
 ## Description
-This plugin for fastify 4.x allows you to publish messages to AWS SQS queues and SNS topics, using a simple interface.
+This plugin for fastify 5.x (for fastify 4.x use ver 2.x) allows you to publish messages to AWS SQS queues and SNS topics, using a simple interface.
 
 **Warning**<br>
 To use this plugin, you must have correctly configured your [AWS credentials](https://docs.aws.amazon.com/sdk-for-javascript/v3/developer-guide/setting-credentials-node.html).
+This plugin uses [@fgiova/mini-sqs-client](https://www.npmjs.com/package/@fgiova/mini-sqs-client) and [@fgiova/mini-sns-client](https://www.npmjs.com/package/@fgiova/mini-sns-client) to interact with SQS and SNS services.
 
 ## Install
 ```bash
@@ -108,6 +110,3 @@ The PublisherMessage support the following attributes:
 
 ## License
 Licensed under [MIT](./LICENSE).
-
-### Acknowledgements
-This project is kindly sponsored by: isendu Srl [www.isendu.com](https://www.isendu.com)
