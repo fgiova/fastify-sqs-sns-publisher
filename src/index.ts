@@ -361,7 +361,7 @@ const publisherSqsSns = (
 	);
 	/* c8 ignore stop */
 	fastify.addHook("onClose", async () => {
-		await Promise.all([sqs.destroy(false), sns.destroy(false)]);
+		await Promise.allSettled([sqs.destroy(false), sns.destroy(false)]);
 		/* c8 ignore next 7 */
 		try {
 			return options.destroySigner || options.destroySigner === undefined

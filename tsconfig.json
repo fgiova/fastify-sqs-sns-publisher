@@ -1,18 +1,14 @@
 {
-  "extends": "@tsconfig/node20/tsconfig.json",
-  "ts-node": {
-    "transpileOnly": true
-  },
-  "compilerOptions": {
-    "outDir": "dist",
-    "rootDir": "src",
-    "typeRoots": [
-      "./node_modules/@types"
-    ],
-    "declaration": true
-  },
-  "exclude": ["node_modules", "dist"],
-  "include": [
-    "src/**/*"
-  ]
+	"extends": "@tsconfig/node22/tsconfig.json",
+	"ts-node": {
+		"transpileOnly": true
+	},
+	"compilerOptions": {
+		"outDir": "dist",
+		"rootDir": "src",
+		"typeRoots": ["./node_modules/@types"],
+		"declaration": true
+	},
+	"exclude": ["node_modules", "dist"],
+	"include": ["src/**/*"]
 }
