@@ -1,3 +1,5 @@
+# [4.0.0](https://github.com/fgiova/fastify-sqs-sns-publisher/compare/3.0.0...4.0.0) (2026-05-07)
+
 # [3.0.0](https://github.com/fgiova/fastify-sqs-sns-publisher/compare/2.0.0...3.0.0) (2025-09-05)
 
 # [2.0.0](https://github.com/fgiova/fastify-sqs-sns-publisher/compare/1.1.0...2.0.0) (2023-11-17)
