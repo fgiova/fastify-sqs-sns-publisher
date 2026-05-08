@@ -1,3 +1,10 @@
+## [4.0.1](https://github.com/fgiova/fastify-sqs-sns-publisher/compare/4.0.0...4.0.1) (2026-05-08)
+
+
+### Bug Fixes
+
+* update dependencies to latest versions ([19a41aa](https://github.com/fgiova/fastify-sqs-sns-publisher/commit/19a41aa6c7cc2b3255c1ffb1e5bc093654635e18))
+
 # [4.0.0](https://github.com/fgiova/fastify-sqs-sns-publisher/compare/3.0.0...4.0.0) (2026-05-07)
 
 # [3.0.0](https://github.com/fgiova/fastify-sqs-sns-publisher/compare/2.0.0...3.0.0) (2025-09-05)
