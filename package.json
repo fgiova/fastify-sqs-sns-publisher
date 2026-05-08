@@ -79,12 +79,12 @@
 		"typescript": "^5.2.2"
 	},
 	"peerDependencies": {
-		"@fgiova/aws-signature": "^4.0.0",
+		"@fgiova/aws-signature": "^5.0.0",
 		"fastify": "^5.0.0"
 	},
 	"dependencies": {
-		"@fgiova/mini-sns-client": "^2.0.0",
-		"@fgiova/mini-sqs-client": "^4.0.0",
+		"@fgiova/mini-sns-client": "^2.1.0",
+		"@fgiova/mini-sqs-client": "^5.1.0",
 		"fastify-plugin": "^5.0.1"
 	}
 }
